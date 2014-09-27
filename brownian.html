@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  background: #000;
+}
+
+</style>
+<body>
+<script src="d3.v3.min.js"></script>
+<script>
+
+var width = 960,
+    height = 500;
+
+var n = 100,
+    m = 1,
+    degrees = 180 / Math.PI;
+
+var mouse = {x: 0, y: 0};
+
+document.addEventListener('mousemove', function(e){ 
+    mouse.x = e.clientX || e.pageX; 
+    mouse.y = e.clientY || e.pageY 
+}, false);
+
+var particles = d3.range(n).map(function() {
+  var x = Math.random() * width,
+      y = Math.random() * height;
+  return {
+    vx: Math.random() * 2 - 1,
+    vy: Math.random() * 2 - 1,
+    path: d3.range(m).map(function() { return [x, y]; }),
+    count: 0
+  };
+});
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+var g = svg.selectAll("g")
+    .data(particles)
+  .enter().append("g");
+
+var head = g.append("ellipse")
+    .attr("rx", 4)
+    .attr("ry", 4);
+
+d3.timer(function() {
+  for (var i = -1; ++i < n;) {
+    var particle = particles[i],
+        path = particle.path,
+        dx = particle.vx,
+        dy = particle.vy,
+        x = path[0][0] += dx,
+        y = path[0][1] += dy,
+        speed = Math.sqrt(dx * dx + dy * dy),
+        count = speed * 10,
+        k1 = -5 - speed / 3;
+
+    if (x < 0 || x > width) particle.vx *= -1;
+    if (y < 0 || y > height) particle.vy *= -1;
+
+    if (Math.abs(x-mouse.x)<20 && Math.abs(y-mouse.y)<20) {
+      if ((particle.vx < 0 && x - mouse.x > 0) || (particle.vx > 0 && x - mouse.x < 0)) particle.vx *= -1; 
+      if ((particle.vy < 0 && y - mouse.y > 0) || (particle.vy > 0 && y - mouse.y < 0)) particle.vy *= -1; 
+    };
+  }
+
+  head.attr("transform", headTransform);
+});
+
+function headTransform(d) {
+  return "translate(" + d.path[0] + ")";
+}
+
+function changeColor() {
+  head.transition().duration(1000).attr("fill", function() {
+    return "hsl(" + Math.random() * 60 + ",100%,50%)";
+  })
+}
+
+setInterval(changeColor, 1000);
+
+</script>
